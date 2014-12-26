@@ -1,0 +1,197 @@
+\documentclass{article}
+\usepackage[BoldFont,SlantFont]{xeCJK}
+\setmainfont{Courier New}
+\setCJKmainfont{WenQuanYi Micro Hei}
+\parindent 2em
+
+\usepackage[superscript]{cite}
+\usepackage{graphicx}
+\renewcommand{\refname}{参考文献}
+
+\begin{document}
+\title{SerialLCD 完成情况报告}
+\author{Mars Wu (武晓宇)}
+\date{2014/12/04}
+\maketitle
+
+\section{简介}
+\label{简介}
+
+SerialLCD 项目采用 STM32F103 + 3.2' LCD (HX8347A) 实现一个串口液晶设备 。
+该设备可以过串口接收 AT 指令 ，解析指令并在 LCD 上显示对应内容 。
+当前 AT 指令集包含 37 条指令 ，基本对应 "Arduino and chipKit Universal TFT display library"\cite{UTFT} (UTFT) 接口 。
+
+\section{完成进度说明}
+\label{sec:完成进度说明}
+
+\subsection{硬件}
+\label{sec:硬件}
+
+有一块可以进行预研的开发板 。
+
+\subsection{软件}
+\label{sec:软件}
+
+实现了 31 条指令的解析和执行 ，预留了其它指令的解析 、执行接口 ，预留了更换其它 LCD 的配置更改接口 ，具体说明如下 。
+
+\subsubsection{系统类命令}
+\label{sec:系统类命令}
+
+除部分 HX8347A 不支持的命令外，其余命令功能都已实现 。
+\begin{itemize}
+\item AT+SD : 输入设备名称 ，并根据名称初始化 LCD 。 已完成 ，对 HX8347A 名称有正确响应 。 
+\end{itemize}
+\begin{itemize}
+\item AT+II : 初始化 LCD 。已完成 ，对 HX8347A 有正确响应 。
+\end{itemize}
+\begin{itemize}
+\item AT+GX : 返回当前 LCD 显示区域 X 轴长度 。已完成，返回结果由串口打印输出 。
+\end{itemize}
+\begin{itemize}
+\item AT+GY : 返回当前 LCD 显示区域 Y 轴长度 。已完成，返回结果由串口打印输出 。
+\end{itemize}
+\begin{itemize}
+\item AT+DO : 开启 LCD 设备 。已完成 ，当前该操作是打开 LCD 背光 。
+\end{itemize}
+\begin{itemize}
+\item AT+DF : 关闭 LCD 设备 。已完成 ，当前该操作是关闭 LCD 背光 。
+\end{itemize}
+\begin{itemize}
+\item AT+SC : 设置对比度 。HX8347A 不支持该功能 。
+\end{itemize}
+\begin{itemize}
+\item AT+SB : 调整 LCD 亮度 。当前硬件连接情况不支持该功能 。
+\end{itemize}
+\begin{itemize}
+\item AT+SP : LCD 显示区页码选择 。HX8347A 不支持该功能 。
+\end{itemize}
+\begin{itemize}
+\item AT+WP : LCD 显示区页操作 。HX8347A 不支持该功能 。
+\end{itemize}
+
+\subsubsection{功能类命令}
+\label{sec:功能类命令}
+
+除了 “绘制位图” 操作外，其余命令全部实现 。
+
+\begin{itemize}
+\item AT+cs : 清屏操作 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+fs : 全屏填充一种颜色 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+sf : 设置前景色 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+gf : 获取前景色 。已完成 ，返回结果由串口打印输出 。
+\end{itemize}
+\begin{itemize}
+\item AT+sb : 设置背景色 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+gb : 获取背景色 。已完成 ，返回结果由串口打印输出 。
+\end{itemize}
+\begin{itemize}
+\item AT+dp : 画点操作 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+dl : 画线操作 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+dr : 画空心矩形操作 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+dc : 画空心圆操作 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+dR : 画空心圆角矩形操作 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+fr : 画填充矩形操作 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+fc : 画填充圆操作 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+fR : 画填充圆角矩形 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+ps : 显示字符串操作 。已完成 ，根据不同的字库 ，支持不同的字符值范围 。
+\end{itemize}
+\begin{itemize}
+\item AT+pi : 显示整型数字操作 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+pf : 显示浮点型数字操作 。已完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+sF : 设置字体操作 。已完成 ，当前字体为 UTFT 库中默认字体集 。
+\end{itemize}
+\begin{itemize}
+\item AT+gF : 获取字体操作 。已完成 ，返回结果由串口打印输出 。
+\end{itemize}
+\begin{itemize}
+\item AT+gX : 获取字体 X 轴大小 。已完成 ，返回结果由串口打印输出 。
+\end{itemize}
+\begin{itemize}
+\item AT+gY : 获取字体 Y 轴大小 。已完成 ，返回结果由串口打印输出 。
+\end{itemize}
+\begin{itemize}
+\item AT+dB : 画位图操作 。尚未完成 ，留有接口 。
+\end{itemize}
+
+\subsubsection{辅助类命令}
+\label{sec:辅助类命令}
+
+该类命令暂时仅留有接口， 都没有完成。
+\begin{itemize}
+\item AT+DT : 数据传输操作 。未完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+ED : 数据传输结束操作 。未完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+EW : Eeprom 写操作 。未完成 。
+\end{itemize}
+\begin{itemize}
+\item AT+FW : Flash 写操作 。未完成 。
+\end{itemize}
+
+\subsubsection{触摸命令}
+\label{sec:触摸命令}
+
+该命令仅留有接口 ，没有完成 。
+\begin{itemize}
+\item AT+gt : 获取触摸按键返回值 。
+\end{itemize}
+
+\subsubsection{软件方面其它说明}
+\label{sec:软件方面其它说明}
+
+软件部分对系统中的资源：串口 、LCD 、AT指令集，分别设计了接口，方便修改，并留有 Flash 、EEPROM 、触摸操作接口的接入点 。
+
+\subsection{附图}
+\label{sec:附图}
+\begin{center}
+  \includegraphics[width=6cm]{s1}
+\end{center}
+\begin{center}
+  \includegraphics[width=6cm]{s2}
+\end{center}
+\begin{center}
+  \includegraphics[width=6cm]{s3}
+\end{center}
+\begin{center}
+  \includegraphics[width=6cm]{s4}
+\end{center}
+\begin{center}
+  \includegraphics[width=6cm]{s5}
+\end{center}
+
+\begin{thebibliography}{10}
+\bibitem{UTFT}
+  http://electronics.henningkarlsen.com/
+\end{thebibliography}
+
+\end{document}

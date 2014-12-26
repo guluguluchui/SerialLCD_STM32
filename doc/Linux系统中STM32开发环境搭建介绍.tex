@@ -1,0 +1,127 @@
+\documentclass{article}
+
+\usepackage[BoldFont,SlantFont]{xeCJK}
+\setmainfont{Courier New}
+\setCJKmainfont{WenQuanYi Micro Hei}
+\parindent 2em
+
+\usepackage[superscript]{cite}
+\usepackage{graphicx}
+
+\renewcommand{\refname}{参考文献}
+
+\begin{document}
+\title{Linux 系统中 STM32 开发环境搭建介绍}
+\author{Mars Wu (武晓宇)}
+\date{2014/12/04}
+\maketitle
+
+\section{简介}
+\label{sec:简介}
+
+在 Linux 下搭建 STM32 开发环境，就是配置编译工具链 、工程管理工具以及调试烧录工具的过程 。本文简单说明了利用 GCC 交叉编译工具链 + eclipse + GDB 作为开发 STM32 环境的配置过程 。
+\section{安装编译工具链}
+\label{sec:编译工具链}
+
+"GNU Tools for ARM Embedded Processors"\cite{gcc-arm-embedded} 是适用于 ARM Corex-M 以及 Cortex-R 处理器的一套工具链 。使用这套工具链就可以编译链接并生成在 STM32 处理器上运行的程序 。它可在其项目主页提供的下载链接地址\cite{gcc-arm-embedded+download}进行下载安装 ，也可以在一些 Linux 发行版的软件管理中找到并安装 。安装好工具链后 ，可用  "arm-none-eabi-*" 调用对应工具命令 。
+
+\section{安装工程管理工具}
+\label{sec:工程管理工具}
+
+Linux 系统中，可以使用 Make 工具及 Makefile 进行项目管理，但由于我对 Makefile 不熟悉 ，而且可能需要自己写启动初始化代码，甚至可能要写链接脚本，所以暂时使用 Eclipse CDT 作为工程管理工具。
+
+\subsection{安装配置}
+\label{sec:安装配置}
+
+Eclipse CDT 是为 C/C++ 开发者提供的 IDE ，"GNU ARM Eclipse Plug-ins"\cite{CDT-ARM} 是在 CDT 基础上为 ARM 处理器提供工程模板的扩展包 。
+
+\subsubsection{安装 Eclipse}
+\label{sec:安装eclipse}
+
+首先在 Eclipse 官网上下载 "luna-SR1" 版本的压缩包\cite{eclipse-download} ,解压并将解压目录加入 PATH 环境变量 ，即可在终端中输入并运行 eclipse 。
+
+\subsubsection{安装 ARM 扩展包}
+\label{sec:arm扩展包}
+
+接着打开 eclipse ，在菜单栏中找到并点击 "Help->Install New Software" ，添加站点 \\
+http://gnuarmeclipse.sourceforge.net/updates \\
+从中安装 "GNU ARM C/C++ Cross Development Tools" ,等待安装完毕即可 。
+
+\begin{center}
+  \includegraphics[width=5cm]{install1}
+\end{center}
+
+如果安装过程中出现错误 ，找不到 CDT 工具之类的 ，可以添加站点 \\
+CDT - http://download.eclipse.org/tools/cdt/releases/8.5 \\安装好 "CDT Main Features" "CDT Optional Features" ，之后重新安装 "GNU ARM C/C++ Cross Development Tools" 。
+
+
+\subsection{创建工程过程}
+\label{sec:创建工程过程}
+
+安装好 CDT 及 ARM 扩展包之后 ，进入 Eclipse ，单击 "File->New->C Project" ,在左侧的 "Executable" 中可看到 STM32 Project ，根据芯片型号选择对应工程 ，单击 "Next" 。
+\begin{center}
+  \includegraphics[width=5cm]{step1}
+\end{center}
+
+接着选择芯片种类 ，填写 Flash 大小等信息 ，选择工程内容及编译选项 ，继续单击 "Next" 。
+\begin{center}
+  \includegraphics[width=5cm]{step2}
+\end{center}
+
+
+保持默认配置到最后一步，选择之前安装的 "GNU Tools for ARM Embedded Processors" 工具链的地址 ，点击 "Finish"，工程创建完毕 。其中 ，STM32 的 CMSIS 库已经被自动添加到工程目录，接下来只需填写自己的应用程序代码 ，编译生成可执行文件 。
+\begin{center}
+  \includegraphics[width=5cm]{step3}
+\end{center}
+\begin{center}
+  \includegraphics[width=5cm]{step4}
+\end{center}
+
+
+注意 ：工程的 Makefile 文档不可修改 ，默认的编译选项可能和交叉编译工具有冲突错误 ，建议安装 GCC 交叉工具链时下载官方最新的版本 。
+
+\section{安装调试烧录工具}
+\label{sec:安装调试烧录工具}
+
+调试烧录工具使用的是 ST 的 stlinkv2 ,没有官方的 Linux 系统驱动 。Github 中有 Linux 操作 stlinkv1 及 stlinkv2 的软件工具 stlink ，链接为 \\
+https://github.com/texane/stlink \\
+安装该软件前，需要安装 GDB 、GDB Server 、libusb-1.0 、pkg-config 这 4 个软件。下载 stlink 后按照下载源码包中的 README 文档说明进行编译安装 。安装好后 ，就可以在终端中使用 "st-util" 命令 ，打开 GDB Server 并连接到 STM32 设备 。
+\begin{center}
+  \includegraphics[width=5cm]{step5}
+\end{center}
+
+连接到了 STM32 设备 ，接下来就用 "arm-none-eabi-gdb" 命令打开编译好的可执行文件 ，
+用 "tar extended-remote: 4242" 命令连接到 GDB Server ，用 “load” 命令进行烧录 。烧录完成后 ，就可以调试运行了 。
+\begin{center}
+  \includegraphics[width=5cm]{step6}
+\end{center}
+
+使用 GDB 调试时 ，以下两点需要注意 ：
+\begin{itemize}
+\item 可以设置数据断点 ，但是执行速度非常慢 ，甚至 stm32 死机 ，建议设置程序断点即可 。
+\end{itemize}
+\begin{itemize}
+\item 有时 GDB 无法读取或者写入某些内存地址的值 ，比如 stm32 的 FSMC 寄存器区域 ，调试时程序运行到相应语句时会导致 stm32 PC 指针指向异常 ，还会导致之后的程序烧录异常 。建议在烧录程序后 ，退出 GDB 调试环境 ，直接在 stm32 中上电运行程序 ，采用串口打印信息的方式进行代码调试 。
+\end{itemize}
+
+\section{其它}
+\label{sec:其它}
+
+\subsection*{串口调试工具}
+\label{sec:串口调试工具}
+
+Linux 下的串口调试工具有 Minicom 、ckert 等，在此建议使用 cutecom 软件 ，图形化配置收发。
+\begin{center}
+  \includegraphics[width=5cm]{step7}
+\end{center}
+\begin{thebibliography}{}
+\bibitem{gcc-arm-embedded}
+  https://launchpad.net/gcc-arm-embedded
+\bibitem{gcc-arm-embedded+download}
+  https://launchpad.net/gcc-arm-embedded/+download
+\bibitem{CDT-ARM}
+  http://sourceforge.net/projects/gnuarmeclipse/files/Eclipse/updates/
+\bibitem{eclipse-download}
+  http://www.eclipse.org/downloads/packages/eclipse-ide-cc-developers/lunasr1
+\end{thebibliography}
+\end{document}

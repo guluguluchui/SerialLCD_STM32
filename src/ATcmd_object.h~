@@ -1,0 +1,96 @@
+/**
+********************************************************************************
+* @file     ATcmd_object.h
+* @author 
+* @version  v0.1
+* @date     2014.11.24
+* @brief    This file contains an ATcmd interface for other applications
+*           which has some arrays of strings (each string is a command) 
+*           and actions for geting/excuting ATcmd
+********************************************************************************
+**/
+
+#ifndef _ATCMD_OBJECT_H_
+#define _ATCMD_OBJECT_H_
+
+/**
+********************************************************************************
+* @Array  ATcmd[]
+* @brief  
+*         head --> when new data get in , head comes to new loction
+*         tail --> when data get used , tail comes to new loction
+*         status --> buffer status: 0--empty ,1--available ,2--full
+*         When (head+1)%SERIAL_BUFFER_SIZE != tail ,buffer is not full
+*         When head == tail ,buffer is empty
+********************************************************************************
+**/
+
+#define MAX_ATCMD_NUM 37
+
+extern const unsigned char ATcmd[MAX_ATCMD_NUM][6];
+
+
+#define ATCMD_BUFFER_SIZE 200
+
+typedef enum
+  {
+    not_start = 0,
+    incomplete = 1,
+    complete = 2,
+  }ATCMD_BUFFER_STATUS;
+
+
+struct ATcmd_buffer
+{
+  unsigned char buf[ATCMD_BUFFER_SIZE];
+  volatile unsigned int new_position;
+  volatile ATCMD_BUFFER_STATUS status;
+};
+
+/**
+********************************************************************************
+* @struct object_uart
+* @brief  uart interface for other applicatons
+*         one object_uart variable represents one uart channel
+*         channel --> uart channel 
+*         rx_buffer --> pointer to a ring buffer for rx
+*         tx_buffer --> pointer to a ring buffer for tx
+*         read_a_char --> read a character from rx_buffer
+*                  o_uart -- must be the object_uart value pointer itself
+*         read_a_string --> read a string from rx_buffer
+*                  o_uart -- must be the object_uart value pointer itself
+*                  p -- the pointer to the string ,must be initialized
+*         uart_printf --> like printf()
+*                  o_uart -- must be the object_uart value pointer itself
+********************************************************************************
+**/
+
+typedef int (*func_t)(unsigned char **args, int arg_num);
+
+typedef struct object_ATcommand object_ATcmd;
+
+struct object_ATcommand
+{
+  struct ATcmd_buffer command;
+  int (*get_cmd)(object_ATcmd *at_cmd);
+  int (*execute)(object_ATcmd *at_cmd);
+  func_t action_array[MAX_ATCMD_NUM];
+};
+
+
+/**
+********************************************************************************
+*  @function    object_uart_init(object_uart *,usigned int channel)
+*  @brief       Set up an uart struct object with it's channel
+*               Default BPS         -- 115200
+*                       Word_length -- 8 bits
+*                       Stop_Bits   -- 1 bit
+*                       Parity      -- none
+*                       HW Flow     -- none
+*  @return      return 0  --> succeed
+*               return -1 --> fail
+********************************************************************************
+**/
+extern int object_ATcmd_init(object_ATcmd * at_cmd);
+
+#endif
